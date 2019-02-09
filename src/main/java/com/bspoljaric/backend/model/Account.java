@@ -13,6 +13,11 @@ public class Account implements Serializable {
     public Account() {
     }
 
+    public Account(String iban, Currency currency) {
+        this.iban = iban;
+        this.currency = currency;
+    }
+
     public Serializable getId() {
         return id;
     }
