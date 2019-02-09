@@ -8,6 +8,8 @@ public class Transfer {
 
     private String     accTo;
 
+    private int        currencyId;
+
     private BigDecimal amount;
 
     public String getAccFrom() {
@@ -32,5 +34,13 @@ public class Transfer {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public int getCurrencyId() {
+        return currencyId;
+    }
+
+    public void setCurrencyId(int currencyId) {
+        this.currencyId = currencyId;
     }
 }

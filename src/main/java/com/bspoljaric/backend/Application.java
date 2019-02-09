@@ -21,22 +21,22 @@ import java.util.logging.Logger;
 public class Application {
 
     // JDBC driver name and database URL
-    static final String            JDBC_DRIVER     = "org.h2.Driver";
-    static final String            DB_URL          = "jdbc:h2:~/test";
+    public static final String      JDBC_DRIVER     = "org.h2.Driver";
+    public static final String      DB_URL          = "jdbc:h2:~/test";
 
     // Database credentials
-    static final String            USER            = "";
-    static final String            PASS            = "";
+    public static final String      USER            = "";
+    public static final String      PASS            = "";
 
     // init Logger
-    final static Logger            LOGGER          = Logger.getLogger(Application.class.getName());
-    public static final BigDecimal SELL_MULTIPLIER = new BigDecimal(0.95);
-    public static final BigDecimal BUY_MULTIPLIER  = new BigDecimal(1.05);
-    public static final int        SCALE           = 4;
-    public static final double     EUR_TO_USD      = 1.13355;
-    public static final double     EUR_TO_RUB      = 74.20949;
-    public static final double     EUR_TO_GBP      = 0.87529;
-    public static final double     EUR_TO_CHF      = 1.13569;
+    final static Logger             LOGGER          = Logger.getLogger(Application.class.getName());
+    private static final BigDecimal SELL_MULTIPLIER = new BigDecimal(0.95);
+    private static final BigDecimal BUY_MULTIPLIER  = new BigDecimal(1.05);
+    private static final int        SCALE           = 4;
+    private static final double     EUR_TO_USD      = 1.13355;
+    private static final double     EUR_TO_RUB      = 74.20949;
+    private static final double     EUR_TO_GBP      = 0.87529;
+    private static final double     EUR_TO_CHF      = 1.13569;
 
     public static void main(String[] args) throws Exception {
         initializeDatabase();
@@ -88,17 +88,7 @@ public class Application {
             LOGGER.severe(e.getMessage());
             conn.rollback();
         } finally {
-            try {
-                if (stmt != null)
-                    stmt.close();
-            } catch (SQLException se2) {
-            }
-            try {
-                if (conn != null)
-                    conn.close();
-            } catch (SQLException se) {
-                LOGGER.severe(se.getMessage());
-            }
+            closeConnection(conn,stmt);
         }
     }
 
@@ -165,16 +155,20 @@ public class Application {
         final String ibanNum2 = "HR0823600003239587990";
         for (int i = 0; i < 2; i++) {
             final String iban;
-            if (i == 0) {
-                iban = ibanNum1;
-            } else {
-                iban = ibanNum2;
-            }
             for (int j = 0; j < 5; j++) {
-                pstmtAccounts.setString(1, iban);
-                pstmtAccounts.setInt(2, j + 1);
-                pstmtAccounts.setBigDecimal(3, new BigDecimal(5000));
-                pstmtAccounts.executeUpdate();
+                // Create all currencies with first IBAN, create local only for second IBAN
+                if (i == 0) {
+                    pstmtAccounts.setString(1, ibanNum1);
+                    pstmtAccounts.setInt(2, j + 1);
+                    pstmtAccounts.setBigDecimal(3, new BigDecimal(5000));
+                    pstmtAccounts.executeUpdate();
+                } else {
+                    pstmtAccounts.setString(1, ibanNum2);
+                    pstmtAccounts.setInt(2, 2);
+                    pstmtAccounts.setBigDecimal(3, new BigDecimal(5000));
+                    pstmtAccounts.executeUpdate();
+                    break;
+                }
             }
             conn.commit();
         }
@@ -200,6 +194,20 @@ public class Application {
             return new BigDecimal(EUR_TO_CHF).multiply(multiplier).setScale(SCALE, RoundingMode.HALF_UP);
         } else {
             return BigDecimal.ONE; // EUR is local Value
+        }
+    }
+
+    public static void closeConnection(Connection conn, Statement stmt) {
+        try {
+            if (stmt != null)
+                stmt.close();
+        } catch (SQLException se2) {
+        }
+        try {
+            if (conn != null)
+                conn.close();
+        } catch (SQLException se) {
+            LOGGER.severe(se.getMessage());
         }
     }
 }

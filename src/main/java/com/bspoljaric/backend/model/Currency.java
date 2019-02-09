@@ -9,6 +9,9 @@ public class Currency extends AbstractCode {
         this.numericCode = numericCode;
     }
 
+    public Currency() {
+    }
+
     public int getNumericCode() {
         return numericCode;
     }

@@ -15,6 +15,9 @@ public abstract class AbstractCode {
         this.code = code;
     }
 
+    protected AbstractCode() {
+    }
+
     public Serializable getId() {
         return id;
     }

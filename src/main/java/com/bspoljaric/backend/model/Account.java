@@ -1,6 +1,7 @@
 package com.bspoljaric.backend.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 public class Account implements Serializable {
 
@@ -10,12 +11,17 @@ public class Account implements Serializable {
 
     private Currency     currency;
 
+    private BigDecimal   amount;
+
     public Account() {
     }
 
-    public Account(String iban, Currency currency) {
-        this.iban = iban;
-        this.currency = currency;
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
     public Serializable getId() {
