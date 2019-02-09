@@ -7,11 +7,10 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class Application {
@@ -30,20 +29,17 @@ public class Application {
     public static void main(String[] args) throws Exception {
         initializeDatabase();
 
-        final Currency usd = new Currency("American Dollar", "USD", 840);
-        final Currency eur = new Currency("Euro", "EUR", 978);
-        final Currency rub = new Currency("Russian Ruble", "RUB", 643);
-        final Currency gbp = new Currency("British Pound", "GBP", );
-        final Currency chf = new Currency("Swiss Franc", "CHF", );
+
+
 
         // Server
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
 
-        Server jettyServer = new Server(8080);
+        final Server jettyServer = new Server(8080);
         jettyServer.setHandler(context);
 
-        ServletHolder jerseyServlet = context.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/*");
+        final ServletHolder jerseyServlet = context.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/*");
         jerseyServlet.setInitOrder(0);
 
         // Tells the Jersey Servlet which REST service/class to load.
@@ -57,9 +53,10 @@ public class Application {
         }
     }
 
-    private static void initializeDatabase() {
+    private static void initializeDatabase() throws SQLException {
         Connection conn = null;
         Statement stmt = null;
+        PreparedStatement pstmt = null;
         try {
             // STEP 1: Register JDBC driver
             Class.forName(JDBC_DRIVER);
@@ -69,11 +66,12 @@ public class Application {
 
             stmt = conn.createStatement();
 
-            final String currencySql = "CREATE TABLE IF NOT EXISTS CURRENCY (ID INTEGER not NULL, NUM_CODE VARCHAR(4) not NULL, CODE VARCHAR(4) not NULL, PRIMARY KEY ( ID ))";
-            final String exchangeRateSQL = "CREATE TABLE IF NOT EXISTS EXCHANGERATE (ID INTEGER not NULL, CUR_ID INTEGER not NULL,  BUY_RATE DECIMAL(7,4),  SELL_RATE DECIMAL(7,4), PRIMARY KEY ( ID ), FOREIGN KEY (CUR_ID) references CURRENCY(ID))";
-            final String accountSQL = "CREATE TABLE IF NOT EXISTS ACCOUNT(ID INTEGER not NULL, IBAN VARCHAR(30) not NULL, CUR_ID INTEGER not NULL, AMOUNT DECIMAL(20,2) NOT NULL, PRIMARY KEY ( ID ), FOREIGN KEY (CUR_ID) references CURRENCY(ID))";
-            final String transactionSQL = "CREATE TABLE IF NOT EXISTS TRANSACTION(ID INTEGER not NULL, ACC_FROM_ID INTEGER not NULL, ACC_TO_ID INTEGER not NULL, CUR_ID INTEGER not NULL, AMOUNT DECIMAL(20,2) NOT NULL, TRX_STATUS INTEGER not NULL, PRIMARY KEY ( ID ), FOREIGN KEY (ACC_FROM_ID) references ACCOUNT(ID), FOREIGN KEY (ACC_TO_ID) references ACCOUNT(ID))";
-            final String transactionHistorySQL = "CREATE TABLE IF NOT EXISTS TRANSACTION_H(ID INTEGER not NULL, TRX_ID INTEGER NOT NULL, TRX_ACTION INTEGER NOT NULL, PRIMARY KEY ( ID ), FOREIGN KEY (TRX_ID) references TRANSACTION(ID))";
+            conn.setAutoCommit(false);
+            final String currencySql = "CREATE TABLE IF NOT EXISTS CURRENCY (ID BIGINT auto_increment not NULL, CUR_NUM VARCHAR(4) not NULL, CUR_CODE VARCHAR(4) not NULL, CUR_NAME VARCHAR(30) not NULL, PRIMARY KEY ( ID ))";
+            final String exchangeRateSQL = "CREATE TABLE IF NOT EXISTS EXCHANGERATE (ID BIGINT auto_increment not NULL, CUR_ID INTEGER not NULL,  BUY_RATE DECIMAL(7,4),  SELL_RATE DECIMAL(7,4), PRIMARY KEY ( ID ), FOREIGN KEY (CUR_ID) references CURRENCY(ID))";
+            final String accountSQL = "CREATE TABLE IF NOT EXISTS ACCOUNT(ID BIGINT auto_increment not NULL, IBAN VARCHAR(30) not NULL, CUR_ID INTEGER not NULL, AMOUNT DECIMAL(20,2) NOT NULL, PRIMARY KEY ( ID ), FOREIGN KEY (CUR_ID) references CURRENCY(ID))";
+            final String transactionSQL = "CREATE TABLE IF NOT EXISTS TRANSACTION(ID BIGINT auto_increment not NULL, ACC_FROM_ID INTEGER not NULL, ACC_TO_ID INTEGER not NULL, CUR_ID INTEGER not NULL, AMOUNT DECIMAL(20,2) NOT NULL, TRX_STATUS INTEGER not NULL, PRIMARY KEY ( ID ), FOREIGN KEY (ACC_FROM_ID) references ACCOUNT(ID), FOREIGN KEY (ACC_TO_ID) references ACCOUNT(ID))";
+            final String transactionHistorySQL = "CREATE TABLE IF NOT EXISTS TRANSACTION_H(ID BIGINT auto_increment not NULL, TRX_ID INTEGER NOT NULL, TRX_ACTION INTEGER NOT NULL, PRIMARY KEY ( ID ), FOREIGN KEY (TRX_ID) references TRANSACTION(ID))";
 
             stmt.addBatch(currencySql);
             stmt.addBatch(exchangeRateSQL);
@@ -83,13 +81,34 @@ public class Application {
 
             stmt.executeBatch();
 
+            final List<Currency> currencyList = new ArrayList<>();
+            currencyList.add(new Currency("American Dollar", "USD", 840));
+            currencyList.add(new Currency("Euro", "EUR", 978));
+            currencyList.add(new Currency("Russian Ruble", "RUB", 643));
+            currencyList.add(new Currency("British Pound", "GBP", 826));
+            currencyList.add(new Currency("Swiss Franc", "CHF", 756));
+
+            final String currencyInsertSQL = "Insert into Currency (CUR_NUM, CUR_CODE, CUR_NAME) VALUES (?, ?, ?)";
+            for(final Currency currency : currencyList){
+                pstmt = conn.prepareStatement(currencyInsertSQL);
+                pstmt.setInt(1, currency.getNumericCode());
+                pstmt.setString(2, currency.getCode());
+                pstmt.setString(3, currency.getName());
+                pstmt.executeUpdate();
+            }
+            conn.commit();
+            conn.setAutoCommit(true);
+
             LOGGER.info("Database initalized.");
+
             stmt.close();
             conn.close();
         } catch (SQLException se) {
             LOGGER.severe(se.getMessage());
+            conn.rollback();
         } catch (Exception e) {
             LOGGER.severe(e.getMessage());
+            conn.rollback();
         } finally {
             try {
                 if (stmt != null)
