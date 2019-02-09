@@ -1,6 +1,5 @@
 package com.bspoljaric.backend;
 
-import com.bspoljaric.backend.model.Account;
 import com.bspoljaric.backend.model.Currency;
 import com.bspoljaric.backend.service.TransferApi;
 import org.eclipse.jetty.server.Server;
@@ -22,22 +21,22 @@ import java.util.logging.Logger;
 public class Application {
 
     // JDBC driver name and database URL
-    static final String JDBC_DRIVER = "org.h2.Driver";
-    static final String DB_URL      = "jdbc:h2:~/test";
+    static final String            JDBC_DRIVER     = "org.h2.Driver";
+    static final String            DB_URL          = "jdbc:h2:~/test";
 
     // Database credentials
-    static final String USER = "";
-    static final String PASS = "";
+    static final String            USER            = "";
+    static final String            PASS            = "";
 
     // init Logger
-    final static Logger LOGGER = Logger.getLogger(Application.class.getName());
+    final static Logger            LOGGER          = Logger.getLogger(Application.class.getName());
     public static final BigDecimal SELL_MULTIPLIER = new BigDecimal(0.95);
-    public static final BigDecimal BUY_MULTIPLIER = new BigDecimal(1.05);
-    public static final int SCALE = 4;
-    public static final double EUR_TO_USD = 1.13355;
-    public static final double EUR_TO_RUB = 74.20949;
-    public static final double EUR_TO_GBP = 0.87529;
-    public static final double EUR_TO_CHF = 1.13569;
+    public static final BigDecimal BUY_MULTIPLIER  = new BigDecimal(1.05);
+    public static final int        SCALE           = 4;
+    public static final double     EUR_TO_USD      = 1.13355;
+    public static final double     EUR_TO_RUB      = 74.20949;
+    public static final double     EUR_TO_GBP      = 0.87529;
+    public static final double     EUR_TO_CHF      = 1.13569;
 
     public static void main(String[] args) throws Exception {
         initializeDatabase();
@@ -105,7 +104,7 @@ public class Application {
 
     private static void createTables(Statement stmt) throws SQLException {
 
-        //Clean DB
+        // Clean DB
         stmt.execute("DROP ALL OBJECTS");
 
         final String currencySql = "CREATE TABLE IF NOT EXISTS CURRENCY (ID BIGINT auto_increment not NULL, CUR_NUM VARCHAR(4) not NULL, CUR_CODE VARCHAR(4) not NULL, CUR_NAME VARCHAR(30) not NULL, PRIMARY KEY ( ID ))";
@@ -164,16 +163,16 @@ public class Application {
         conn.setAutoCommit(false);
         final String ibanNum1 = "HR0523600003116069505";
         final String ibanNum2 = "HR0823600003239587990";
-        for(int i = 0; i < 2; i++){
+        for (int i = 0; i < 2; i++) {
             final String iban;
-            if(i == 0){
+            if (i == 0) {
                 iban = ibanNum1;
-            }else{
+            } else {
                 iban = ibanNum2;
             }
-            for(int j = 0; j<5;j++){
+            for (int j = 0; j < 5; j++) {
                 pstmtAccounts.setString(1, iban);
-                pstmtAccounts.setInt(2, j+1);
+                pstmtAccounts.setInt(2, j + 1);
                 pstmtAccounts.setBigDecimal(3, new BigDecimal(5000));
                 pstmtAccounts.executeUpdate();
             }
@@ -204,4 +203,3 @@ public class Application {
         }
     }
 }
-

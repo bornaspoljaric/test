@@ -6,9 +6,9 @@ public abstract class AbstractCode {
 
     private Serializable id;
 
-    private String name;
+    private String       name;
 
-    private String code;
+    private String       code;
 
     public AbstractCode(String name, String code) {
         this.name = name;

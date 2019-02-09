@@ -3,15 +3,15 @@ package com.bspoljaric.backend.model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-public class ExchangeRate implements Serializable{
+public class ExchangeRate implements Serializable {
 
     private Serializable id;
 
-    private Currency currency;
+    private Currency     currency;
 
-    private BigDecimal buyRate;
+    private BigDecimal   buyRate;
 
-    private BigDecimal sellRate;
+    private BigDecimal   sellRate;
 
     public ExchangeRate(Currency currency, BigDecimal buyRate, BigDecimal sellRate) {
         this.currency = currency;

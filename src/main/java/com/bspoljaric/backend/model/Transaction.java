@@ -7,13 +7,13 @@ public class Transaction implements Serializable {
 
     private Serializable id;
 
-    private Account accountTo;
+    private Account      accountTo;
 
-    private Account accountFrom;
+    private Account      accountFrom;
 
-    private BigDecimal amount;
+    private BigDecimal   amount;
 
-    private Currency currency;
+    private Currency     currency;
 
     public Transaction() {
     }
