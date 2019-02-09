@@ -1,14 +1,8 @@
 package com.bspoljaric.backend.util;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-
-@XmlRootElement
 public class ApiError {
-    @XmlElement(name = "status")
-    int    status;
-    @XmlElement(name = "message")
-    String message;
+    private int    status;
+    private String message;
 
     public ApiError(int status, String message) {
         this.status = status;

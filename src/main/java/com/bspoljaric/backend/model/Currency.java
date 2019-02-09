@@ -1,13 +1,19 @@
 package com.bspoljaric.backend.model;
 
-import java.io.Serializable;
+public class Currency extends AbstractCode {
 
-public class Currency implements Serializable {
+    private int numericCode;
 
-    private Serializable id;
+    public Currency(String name, String code, int numericCode) {
+        super(name, code);
+        this.numericCode = numericCode;
+    }
 
-    private String       code;
+    public int getNumericCode() {
+        return numericCode;
+    }
 
-    private String       name;
-
+    public void setNumericCode(int numericCode) {
+        this.numericCode = numericCode;
+    }
 }

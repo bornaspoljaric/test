@@ -1,19 +1,37 @@
 package com.bspoljaric.backend.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 public class Transaction implements Serializable {
 
     private Serializable id;
 
-    private String       account;
+    private Account accountTo;
+
+    private Account accountFrom;
+
+    private BigDecimal amount;
+
+    private Currency currency;
 
     public Transaction() {
     }
 
-    public Transaction(Serializable id, String account) {
-        this.id = id;
-        this.account = account;
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Currency currency) {
+        this.currency = currency;
     }
 
     public Serializable getId() {
@@ -24,11 +42,19 @@ public class Transaction implements Serializable {
         this.id = id;
     }
 
-    public String getAccount() {
-        return account;
+    public Account getAccountTo() {
+        return accountTo;
     }
 
-    public void setAccount(String account) {
-        this.account = account;
+    public void setAccountTo(Account accountTo) {
+        this.accountTo = accountTo;
+    }
+
+    public Account getAccountFrom() {
+        return accountFrom;
+    }
+
+    public void setAccountFrom(Account accountFrom) {
+        this.accountFrom = accountFrom;
     }
 }
