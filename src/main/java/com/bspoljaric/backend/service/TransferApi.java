@@ -4,6 +4,7 @@ import com.bspoljaric.backend.dto.Transfer;
 import com.bspoljaric.backend.model.Account;
 import com.bspoljaric.backend.model.Currency;
 import com.bspoljaric.backend.model.Transaction;
+import com.bspoljaric.backend.model.TransactionAction;
 import com.bspoljaric.backend.model.TransactionStatus;
 import com.bspoljaric.backend.util.ApiError;
 import com.google.gson.Gson;
@@ -21,6 +22,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.logging.Logger;
 
 import static com.bspoljaric.backend.Application.DB_URL;
@@ -69,11 +71,13 @@ public class TransferApi {
             // Define all select statements
             final String selectAccount = "SELECT ID, IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = ?";
             final String selectLocalAccount = "SELECT ID, IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = 2";
-            final String selectCountAccount = "SELECT COUNT(*) FROM ACCOUNT WHERE IBAN = ?";
+            final String selectCountAccountTo = "SELECT COUNT(*) FROM ACCOUNT WHERE IBAN = ?";
+            final String selectCountAccountFrom = "SELECT COUNT(*) FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = ?";
             final String selectCurrency = "SELECT ID, CUR_NUM, CUR_CODE, CUR_NAME FROM CURRENCY WHERE ID = ?";
             final String selectCurrencyCount = "SELECT COUNT(*) FROM CURRENCY WHERE ID = ?";
             final String selectExchangeRate = "SELECT SELL_RATE FROM EXCHANGERATE WHERE CUR_ID = ?";
             final String insertTransaction = "INSERT INTO TRANSACTION (ACC_FROM_ID, ACC_TO_ID, CUR_ID, AMOUNT, TRX_STATUS) VALUES (?,?,?,?,?)";
+            final String insertTransactionHistory = "INSERT INTO TRANSACTION_H (TRX_ID, TRX_ACTION) VALUES (?,?)";
 
             final PreparedStatement pstmtCurrencyCheck = conn.prepareStatement(selectCurrencyCount);
             pstmtCurrencyCheck.setInt(1, transfer.getCurrencyId());
@@ -95,7 +99,7 @@ public class TransferApi {
             final PreparedStatement pstmtAccToLocal = conn.prepareStatement(selectLocalAccount);
             pstmtAccToLocal.setString(1, transfer.getAccTo());
 
-            final PreparedStatement pstmtCount = conn.prepareStatement(selectCountAccount);
+            final PreparedStatement pstmtCount = conn.prepareStatement(selectCountAccountTo);
             pstmtCount.setString(1, transfer.getAccTo());
 
             final ResultSet rsCount = pstmtCount.executeQuery();
@@ -119,8 +123,9 @@ public class TransferApi {
                 }
             }
 
-            final PreparedStatement pstmtAccFromCount = conn.prepareStatement(selectCountAccount);
+            final PreparedStatement pstmtAccFromCount = conn.prepareStatement(selectCountAccountFrom);
             pstmtAccFromCount.setString(1, transfer.getAccFrom());
+            pstmtAccFromCount.setInt(2, transfer.getCurrencyId());
 
             //Account From check
             final ResultSet rsAccFromCount = pstmtAccFromCount.executeQuery();
@@ -156,15 +161,24 @@ public class TransferApi {
             transaction.setAmount(amount);
             transaction.setTransactionStatus(TransactionStatus.CREATED);
 
-            final PreparedStatement pstmtInsertTrx = conn.prepareStatement(insertTransaction);
+            final PreparedStatement pstmtInsertTrx = conn.prepareStatement(insertTransaction, Statement.RETURN_GENERATED_KEYS);
             pstmtInsertTrx.setInt(1, (Integer) transaction.getAccountFrom().getId());
             pstmtInsertTrx.setInt(2, (Integer) transaction.getAccountTo().getId());
             pstmtInsertTrx.setInt(3, (Integer) transaction.getCurrency().getId());
             pstmtInsertTrx.setBigDecimal(4, transaction.getAmount());
             pstmtInsertTrx.setInt(5, transaction.getTransactionStatus().value);
             pstmtInsertTrx.executeUpdate();
-
-            conn.close();
+            ResultSet generatedKeys = pstmtInsertTrx.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                int id = generatedKeys.getInt(1);
+                final PreparedStatement pstmtInsertTrxHistory = conn.prepareStatement(insertTransactionHistory);
+                pstmtInsertTrxHistory.setInt(1, id);
+                pstmtInsertTrxHistory.setInt(2, TransactionAction.CREATE.value);
+                pstmtInsertTrxHistory.executeUpdate();
+            } else {
+                return Response.serverError().entity(new ApiError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Server has internal problems, please try again later"))
+                        .build();
+            }
         } catch (SQLException se) {
             LOGGER.severe(se.getMessage());
             conn.rollback();
@@ -176,7 +190,9 @@ public class TransferApi {
             return Response.serverError().entity(new ApiError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Server has internal problems, please try again later"))
                     .build();
         } finally {
-            conn.close();
+            if(conn != null){
+                conn.close();
+            }
         }
         return Response.ok().type(MediaType.APPLICATION_JSON).entity(new Gson().toJson("Transaction has been successfully created")).build();
     }
