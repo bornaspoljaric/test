@@ -1,4 +1,4 @@
-package com.bspoljaric.backend.service;
+package com.bspoljaric.backend.api;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

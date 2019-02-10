@@ -1,9 +1,14 @@
 package com.bspoljaric.backend;
 
 import com.bspoljaric.backend.model.Currency;
+import com.bspoljaric.backend.model.Transaction;
+import com.bspoljaric.backend.service.TransactionService;
+import com.bspoljaric.backend.service.impl.TransactionServiceImpl;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.ResourceConfig;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -49,7 +54,16 @@ public class Application {
         final ServletHolder jerseyServlet = context.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/*");
         jerseyServlet.setInitOrder(0);
 
-        jerseyServlet.setInitParameter("jersey.config.server.provider.packages", "com.bspoljaric.backend.service");
+        jerseyServlet.setInitParameter("jersey.config.server.provider.packages", "com.bspoljaric.backend.api");
+
+        //Define DI
+        ResourceConfig config = new ResourceConfig(TransactionService.class);
+        config.register(new AbstractBinder() {
+            @Override
+            protected void configure() {
+                bind(TransactionServiceImpl.class).to(TransactionService.class);
+            }
+        });
 
         try {
             jettyServer.start();

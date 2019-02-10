@@ -1,4 +1,4 @@
-package com.bspoljaric.backend.service;
+package com.bspoljaric.backend.api;
 
 import com.bspoljaric.backend.dto.Transfer;
 import com.bspoljaric.backend.model.Account;
