@@ -1,7 +1,6 @@
 package com.bspoljaric.backend;
 
 import com.bspoljaric.backend.model.Currency;
-import com.bspoljaric.backend.service.TransferApi;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -9,11 +8,10 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.DriverManager;
-
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -51,8 +49,7 @@ public class Application {
         final ServletHolder jerseyServlet = context.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/*");
         jerseyServlet.setInitOrder(0);
 
-        // Tells the Jersey Servlet which REST service/class to load.
-        jerseyServlet.setInitParameter("jersey.config.server.provider.classnames", TransferApi.class.getCanonicalName());
+        jerseyServlet.setInitParameter("jersey.config.server.provider.packages", "com.bspoljaric.backend.service");
 
         try {
             jettyServer.start();

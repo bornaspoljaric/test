@@ -13,7 +13,12 @@ public class Account implements Serializable {
 
     private BigDecimal   amount;
 
+    public Account(String iban) {
+        this.iban = iban;
+    }
+
     public Account() {
+
     }
 
     public BigDecimal getAmount() {

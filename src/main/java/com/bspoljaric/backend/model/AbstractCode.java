@@ -18,6 +18,10 @@ public abstract class AbstractCode {
     protected AbstractCode() {
     }
 
+    public AbstractCode(String code) {
+        this.code = code;
+    }
+
     public Serializable getId() {
         return id;
     }
