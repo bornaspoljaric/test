@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class Application {
+public class Application extends ResourceConfig {
 
     // JDBC driver name and database URL
     public static final String      JDBC_DRIVER     = "org.h2.Driver";
@@ -42,8 +42,13 @@ public class Application {
     private static final double     EUR_TO_CHF      = 1.13569;
 
     public static void main(String[] args) throws Exception {
+        new Application();
+    }
+
+    public Application() throws SQLException {
         initializeDatabase();
 
+        register(new ApplicationBinder());
         // Server
         final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
@@ -56,22 +61,19 @@ public class Application {
 
         jerseyServlet.setInitParameter("jersey.config.server.provider.packages", "com.bspoljaric.backend.api");
 
-        //Define DI
-        ResourceConfig config = new ResourceConfig(TransactionService.class);
-        config.register(new AbstractBinder() {
-            @Override
-            protected void configure() {
-                bind(TransactionServiceImpl.class).to(TransactionService.class);
-            }
-        });
-
         try {
             jettyServer.start();
             jettyServer.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             jettyServer.destroy();
         }
     }
+
+
 
     private static void initializeDatabase() throws SQLException {
         Connection conn = null;
