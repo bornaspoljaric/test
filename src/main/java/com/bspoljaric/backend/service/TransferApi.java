@@ -1,6 +1,5 @@
 package com.bspoljaric.backend.service;
 
-import com.bspoljaric.backend.Application;
 import com.bspoljaric.backend.dto.Transfer;
 import com.bspoljaric.backend.model.Account;
 import com.bspoljaric.backend.model.Currency;
@@ -24,20 +23,20 @@ import static com.bspoljaric.backend.Application.*;
 public class TransferApi {
     final static Logger LOGGER = Logger.getLogger(TransferApi.class.getName());
 
-    @POST
     @Path("/create")
+    @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response transfer(final Transfer transfer) {
+    public Response transfer(final Transfer transfer) throws SQLException {
 
         // Define params to eliminate multiple calls
         final String accountToDto = transfer.getAccTo();
         final String accountFromDto = transfer.getAccFrom();
         final BigDecimal amount = transfer.getAmount();
 
-        Account accountFrom;
-        Account accountTo;
-        final Transaction transaction = null;
+        Account accountFrom = null;
+        Account accountTo = null;
+        final Transaction transaction = new Transaction();
 
         // Do null validations
         if (accountToDto == null || accountToDto.trim().length() == 0) {
@@ -58,13 +57,27 @@ public class TransferApi {
             Class.forName(JDBC_DRIVER);
 
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
 
-            final String selectAccount = "SELECT IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = ?";
-            final String selectLocalAccount = "SELECT IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = 2";
-            final String selectCountAccount = "SELECT COUNT(*) IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? as COUNT";
-            final String selectCurrency = "SELECT ID, CUR_NUM, CUR_CODE, CUR_NAME FROM CURRENCY WHERE CUR_ID = ?";
+            // Define all select statements
+            final String selectAccount = "SELECT ID, IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = ?";
+            final String selectLocalAccount = "SELECT ID, IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = 2";
+            final String selectCountAccount = "SELECT COUNT(*) FROM ACCOUNT WHERE IBAN = ?";
+            final String selectCurrency = "SELECT ID, CUR_NUM, CUR_CODE, CUR_NAME FROM CURRENCY WHERE ID = ?";
+            final String selectCurrencyCount = "SELECT COUNT(*) FROM CURRENCY WHERE ID = ?";
             final String selectExchangeRate = "SELECT SELL_RATE FROM EXCHANGERATE WHERE CUR_ID = ?";
+
+            final PreparedStatement pstmtCurrencyCheck = conn.prepareStatement(selectCurrencyCount);
+            pstmtCurrencyCheck.setInt(1, transfer.getCurrencyId());
+            final ResultSet rsCurrencyCheck = pstmtCurrencyCheck.executeQuery();
+
+            // Check does the currency exist
+            while (rsCurrencyCheck.next()) {
+                int count = rsCurrencyCheck.getInt(1);
+                // Account does not exist, return error
+                if (count == 0) {
+                    return Response.serverError().entity(new ApiError(Response.Status.NOT_FOUND.getStatusCode(), "Currency cannot be found")).build();
+                }
+            }
 
             final PreparedStatement pstmtAcc = conn.prepareStatement(selectAccount);
             pstmtAcc.setString(1, transfer.getAccTo());
@@ -78,7 +91,7 @@ public class TransferApi {
 
             final ResultSet rsCount = pstmtCount.executeQuery();
             while (rsCount.next()) {
-                int count = rsCount.getInt("total");
+                int count = rsCount.getInt(1);
                 // Account does not exist, return error
                 if (count == 0) {
                     return Response.serverError().entity(new ApiError(Response.Status.NOT_FOUND.getStatusCode(), "Recipient account cannot be found")).build();
@@ -92,43 +105,41 @@ public class TransferApi {
                         accountTo = calculateAccount(accountTo, trxCurrency, rsAccToLocal);
                     } else {
                         Currency trxCurrency = getCurrency(conn, selectCurrency, transfer.getCurrencyId());
-                        accountTo = calculateAccount(accountTo, trxCurrency, rsAccTo);
+                        accountTo = calculateAccount(new Account(), trxCurrency, rsAccTo);
                     }
                 }
             }
 
-            final PreparedStatement pstmtAccFrom = conn.prepareStatement(selectAccount);
-            pstmtAccFrom.setString(1, transfer.getAccFrom());
-            pstmtAccFrom.setInt(2, transfer.getCurrencyId());
+            final PreparedStatement pstmtAccFromCount = conn.prepareStatement(selectCountAccount);
+            pstmtAccFromCount.setString(1, transfer.getAccFrom());
 
-            final ResultSet rsAccTo = pstmtCount.executeQuery();
-            // Check if acc exists
-            if (!rsAccTo.next()) {
-                return Response.serverError().entity(new ApiError(Response.Status.NOT_FOUND.getStatusCode(), "Recipient account cannot be found")).build();
-            } else {
-                // If it exists, map to Java object
-                while (rsAccTo.next()) {
-                    final ResultSet rsAccFrom = pstmtAcc.executeQuery();
-                    final Currency trxCurrency = getCurrency(conn, selectCurrency, transfer.getCurrencyId());
-                    accountFrom = calculateAccount(accountFrom, trxCurrency, rsAccFrom);
+            //Account From check
+            final ResultSet rsAccFromCount = pstmtAccFromCount.executeQuery();
+            while (rsAccFromCount.next()) {
+                int count = rsAccFromCount.getInt(1);
+                if (count == 0) {
+                    return Response.serverError().entity(new ApiError(Response.Status.NOT_FOUND.getStatusCode(), "Sender account cannot be found")).build();
+                } else {
+                    final PreparedStatement pstmtAccFrom = conn.prepareStatement(selectAccount);
+                    pstmtAccFrom.setString(1, transfer.getAccFrom());
+                    pstmtAccFrom.setInt(2, transfer.getCurrencyId());
+                    final ResultSet rsAccFrom = pstmtAccFrom.executeQuery();
+                    while (rsAccFrom.next()) {
+                        final Currency trxCurrency = getCurrency(conn, selectCurrency, transfer.getCurrencyId());
+                        accountFrom = calculateAccount(new Account(), trxCurrency, rsAccFrom);
+                    }
                 }
             }
 
-            // IF currencys are not equal, use exchange rate
+            // IF currencies are not equal, use exchange rate
             if (!accountFrom.getCurrency().equals(accountTo.getCurrency())) {
                 final PreparedStatement pstmtExchange = conn.prepareStatement(selectExchangeRate);
-                pstmtAcc.setInt(1, transfer.getCurrencyId());
+                pstmtExchange.setInt(1, transfer.getCurrencyId());
                 ResultSet rsExchange = pstmtExchange.executeQuery();
-                // check if rate exists
-                if (!rsExchange.next()) {
-                    return Response.serverError().entity(new ApiError(Response.Status.NOT_FOUND.getStatusCode(), "Exchange Rate cannot be found")).build();
-                } else {
-                    while (rsExchange.next()) {
-                        BigDecimal rate = rsExchange.getBigDecimal("SELL_RATE");
-                        amount = amount.divide(rate).setScale(2, RoundingMode.HALF_UP);
-                    }
+                while (rsExchange.next()) {
+                    final BigDecimal rate = rsExchange.getBigDecimal("SELL_RATE");
+                    transaction.setAmount(amount.divide(rate).setScale(2, RoundingMode.HALF_UP));
                 }
-
             }
             transaction.setAccountFrom(accountFrom);
             transaction.setAccountTo(accountTo);
@@ -138,8 +149,7 @@ public class TransferApi {
             // Execute transaction
             // Add to account of recipient
             // Deduct from account of payer
-            
-            stmt.close();
+
             conn.close();
         } catch (SQLException se) {
             LOGGER.severe(se.getMessage());
@@ -165,19 +175,18 @@ public class TransferApi {
         while (rsCurrency.next()) {
             trxCurrency.setId(rsCurrency.getInt("ID"));
             trxCurrency.setCode(rsCurrency.getString("CUR_CODE"));
-            trxCurrency.setNumericCode(rsCurrency.getInt("NUM_CODE"));
+            trxCurrency.setNumericCode(rsCurrency.getInt("CUR_NUM"));
             trxCurrency.setName(rsCurrency.getString("CUR_NAME"));
         }
         return trxCurrency;
     }
 
     private Account calculateAccount(Account account, Currency trxCurrency, ResultSet rsAcc) throws SQLException {
-        while (rsAcc.next()) {
-            account.setId(rsAcc.getInt("ID"));
-            account.setIban(rsAcc.getString("IBAN"));
-            account.setAmount(rsAcc.getBigDecimal("AMOUNT"));
-            account.setCurrency(trxCurrency);
-        }
+        account.setId(rsAcc.getInt("ID"));
+        account.setIban(rsAcc.getString("IBAN"));
+        account.setAmount(rsAcc.getBigDecimal("AMOUNT"));
+        account.setCurrency(trxCurrency);
+
         return account;
     }
 

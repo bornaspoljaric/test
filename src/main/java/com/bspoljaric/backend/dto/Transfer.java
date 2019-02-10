@@ -12,6 +12,16 @@ public class Transfer {
 
     private BigDecimal amount;
 
+    public Transfer(String accFrom, String accTo, int currencyId, BigDecimal amount) {
+        this.accFrom = accFrom;
+        this.accTo = accTo;
+        this.currencyId = currencyId;
+        this.amount = amount;
+    }
+
+    public Transfer() {
+    }
+
     public String getAccFrom() {
         return accFrom;
     }
