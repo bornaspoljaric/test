@@ -1,0 +1,191 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Revolut",
+		"_postman_id": "3153be83-d18c-46e7-8737-2a52068f7e0b",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Recipient cannot be found",
+			"request": {
+				"url": {
+					"raw": "http://localhost:8080/transfer/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transfer",
+						"create"
+					],
+					"query": [
+						{
+							"key": "accTo",
+							"value": "1",
+							"equals": true,
+							"description": "",
+							"disabled": true
+						},
+						{
+							"key": "accFrom",
+							"value": "1",
+							"description": "",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "amount",
+							"value": "1",
+							"description": "",
+							"type": "text",
+							"disabled": true
+						}
+					],
+					"variable": []
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"accTo\": \"2\",\t\r\n  \"accFrom\": \"2\",\r\n  \"amount\": 3,\r\n  \"currencyId\": 2\r\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Sender cannot be found",
+			"request": {
+				"url": {
+					"raw": "http://localhost:8080/transfer/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transfer",
+						"create"
+					],
+					"query": [
+						{
+							"key": "accTo",
+							"value": "1",
+							"equals": true,
+							"description": "",
+							"disabled": true
+						},
+						{
+							"key": "accFrom",
+							"value": "1",
+							"description": "",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "amount",
+							"value": "1",
+							"description": "",
+							"type": "text",
+							"disabled": true
+						}
+					],
+					"variable": []
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"accTo\": \"HR0523600003116069505\",\t\r\n  \"accFrom\": \"2\",\r\n  \"amount\": 3,\r\n  \"currencyId\": 2\r\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Currency cannot be found",
+			"request": {
+				"url": {
+					"raw": "http://localhost:8080/transfer/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"transfer",
+						"create"
+					],
+					"query": [
+						{
+							"key": "accTo",
+							"value": "1",
+							"equals": true,
+							"description": "",
+							"disabled": true
+						},
+						{
+							"key": "accFrom",
+							"value": "1",
+							"description": "",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "amount",
+							"value": "1",
+							"description": "",
+							"type": "text",
+							"disabled": true
+						}
+					],
+					"variable": []
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					},
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"accTo\": \"HR0523600003116069505\",\t\r\n  \"accFrom\": \"HR0823600003239587990\",\r\n  \"amount\": 3,\r\n  \"currencyId\": 8\r\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
