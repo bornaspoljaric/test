@@ -88,7 +88,7 @@ public class Application {
             LOGGER.severe(e.getMessage());
             conn.rollback();
         } finally {
-            closeConnection(conn,stmt);
+            closeConnection(conn, stmt);
         }
     }
 
@@ -100,7 +100,7 @@ public class Application {
         final String currencySql = "CREATE TABLE IF NOT EXISTS CURRENCY (ID BIGINT auto_increment not NULL, CUR_NUM VARCHAR(4) not NULL, CUR_CODE VARCHAR(4) not NULL, CUR_NAME VARCHAR(30) not NULL, PRIMARY KEY ( ID ))";
         final String exchangeRateSQL = "CREATE TABLE IF NOT EXISTS EXCHANGERATE (ID BIGINT auto_increment not NULL, CUR_ID INTEGER not NULL,  BUY_RATE DECIMAL(7,4),  SELL_RATE DECIMAL(7,4), PRIMARY KEY ( ID ), FOREIGN KEY (CUR_ID) references CURRENCY(ID))";
         final String accountSQL = "CREATE TABLE IF NOT EXISTS ACCOUNT(ID BIGINT auto_increment not NULL, IBAN VARCHAR(30) not NULL, CUR_ID INTEGER not NULL, AMOUNT DECIMAL(20,2) NOT NULL, PRIMARY KEY ( ID ), FOREIGN KEY (CUR_ID) references CURRENCY(ID))";
-        final String transactionSQL = "CREATE TABLE IF NOT EXISTS TRANSACTION(ID BIGINT auto_increment not NULL, ACC_FROM_ID INTEGER not NULL, ACC_TO_ID INTEGER not NULL, CUR_ID INTEGER not NULL, AMOUNT DECIMAL(20,2) NOT NULL, TRX_STATUS INTEGER not NULL, PRIMARY KEY ( ID ), FOREIGN KEY (ACC_FROM_ID) references ACCOUNT(ID), FOREIGN KEY (ACC_TO_ID) references ACCOUNT(ID))";
+        final String transactionSQL = "CREATE TABLE IF NOT EXISTS TRANSACTION(ID BIGINT auto_increment not NULL, ACC_FROM_ID INTEGER not NULL, ACC_TO_ID INTEGER not NULL, CUR_ID INTEGER not NULL, AMOUNT DECIMAL(20,2) NOT NULL, TRX_STATUS INTEGER not NULL, PRIMARY KEY ( ID ), FOREIGN KEY (ACC_FROM_ID) references ACCOUNT(ID), FOREIGN KEY (ACC_TO_ID) references ACCOUNT(ID), FOREIGN KEY (CUR_ID) references CURRENCY(ID))";
         final String transactionHistorySQL = "CREATE TABLE IF NOT EXISTS TRANSACTION_H(ID BIGINT auto_increment not NULL, TRX_ID INTEGER NOT NULL, TRX_ACTION INTEGER NOT NULL, PRIMARY KEY ( ID ), FOREIGN KEY (TRX_ID) references TRANSACTION(ID))";
 
         stmt.addBatch(currencySql);
@@ -206,7 +206,7 @@ public class Application {
             LOGGER.severe(se.getMessage());
         }
         try {
-            if (conn != null){
+            if (conn != null) {
                 conn.close();
             }
         } catch (SQLException se) {

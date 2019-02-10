@@ -5,15 +5,17 @@ import java.math.BigDecimal;
 
 public class Transaction implements Serializable {
 
-    private Serializable id;
+    private Serializable      id;
 
-    private Account      accountTo;
+    private Account           accountTo;
 
-    private Account      accountFrom;
+    private Account           accountFrom;
 
-    private BigDecimal   amount;
+    private BigDecimal        amount;
 
-    private Currency     currency;
+    private Currency          currency;
+
+    private TransactionStatus transactionStatus;
 
     public Transaction() {
     }
@@ -56,5 +58,13 @@ public class Transaction implements Serializable {
 
     public void setAccountFrom(Account accountFrom) {
         this.accountFrom = accountFrom;
+    }
+
+    public TransactionStatus getTransactionStatus() {
+        return transactionStatus;
+    }
+
+    public void setTransactionStatus(TransactionStatus transactionStatus) {
+        this.transactionStatus = transactionStatus;
     }
 }

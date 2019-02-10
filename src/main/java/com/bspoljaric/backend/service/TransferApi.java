@@ -4,6 +4,7 @@ import com.bspoljaric.backend.dto.Transfer;
 import com.bspoljaric.backend.model.Account;
 import com.bspoljaric.backend.model.Currency;
 import com.bspoljaric.backend.model.Transaction;
+import com.bspoljaric.backend.model.TransactionStatus;
 import com.bspoljaric.backend.util.ApiError;
 import com.google.gson.Gson;
 
@@ -20,8 +21,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 
 import static com.bspoljaric.backend.Application.DB_URL;
@@ -74,6 +73,7 @@ public class TransferApi {
             final String selectCurrency = "SELECT ID, CUR_NUM, CUR_CODE, CUR_NAME FROM CURRENCY WHERE ID = ?";
             final String selectCurrencyCount = "SELECT COUNT(*) FROM CURRENCY WHERE ID = ?";
             final String selectExchangeRate = "SELECT SELL_RATE FROM EXCHANGERATE WHERE CUR_ID = ?";
+            final String insertTransaction = "INSERT INTO TRANSACTION (ACC_FROM_ID, ACC_TO_ID, CUR_ID, AMOUNT, TRX_STATUS) VALUES (?,?,?,?,?)";
 
             final PreparedStatement pstmtCurrencyCheck = conn.prepareStatement(selectCurrencyCount);
             pstmtCurrencyCheck.setInt(1, transfer.getCurrencyId());
@@ -154,10 +154,15 @@ public class TransferApi {
             transaction.setAccountTo(accountTo);
             transaction.setCurrency(accountFrom.getCurrency());
             transaction.setAmount(amount);
+            transaction.setTransactionStatus(TransactionStatus.CREATED);
 
-            // Execute transaction
-            // Add to account of recipient
-            // Deduct from account of payer
+            final PreparedStatement pstmtInsertTrx = conn.prepareStatement(insertTransaction);
+            pstmtInsertTrx.setInt(1, (Integer) transaction.getAccountFrom().getId());
+            pstmtInsertTrx.setInt(2, (Integer) transaction.getAccountTo().getId());
+            pstmtInsertTrx.setInt(3, (Integer) transaction.getCurrency().getId());
+            pstmtInsertTrx.setBigDecimal(4, transaction.getAmount());
+            pstmtInsertTrx.setInt(5, transaction.getTransactionStatus().value);
+            pstmtInsertTrx.executeUpdate();
 
             conn.close();
         } catch (SQLException se) {
