@@ -199,13 +199,16 @@ public class Application {
 
     public static void closeConnection(Connection conn, Statement stmt) {
         try {
-            if (stmt != null)
+            if (stmt != null) {
                 stmt.close();
-        } catch (SQLException se2) {
+            }
+        } catch (SQLException se) {
+            LOGGER.severe(se.getMessage());
         }
         try {
-            if (conn != null)
+            if (conn != null){
                 conn.close();
+            }
         } catch (SQLException se) {
             LOGGER.severe(se.getMessage());
         }

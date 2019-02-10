@@ -5,6 +5,7 @@ import com.bspoljaric.backend.model.Account;
 import com.bspoljaric.backend.model.Currency;
 import com.bspoljaric.backend.model.Transaction;
 import com.bspoljaric.backend.util.ApiError;
+import com.google.gson.Gson;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -14,10 +15,19 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
-import static com.bspoljaric.backend.Application.*;
+import static com.bspoljaric.backend.Application.DB_URL;
+import static com.bspoljaric.backend.Application.JDBC_DRIVER;
+import static com.bspoljaric.backend.Application.PASS;
+import static com.bspoljaric.backend.Application.USER;
 
 @Path("/transfer")
 public class TransferApi {
@@ -52,7 +62,6 @@ public class TransferApi {
         }
 
         Connection conn = null;
-        Statement stmt = null;
         try {
             Class.forName(JDBC_DRIVER);
 
@@ -162,9 +171,9 @@ public class TransferApi {
             return Response.serverError().entity(new ApiError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Server has internal problems, please try again later"))
                     .build();
         } finally {
-            closeConnection(conn, stmt);
+            conn.close();
         }
-        return Response.ok("Transaction processed!", MediaType.APPLICATION_JSON).build();
+        return Response.ok().type(MediaType.APPLICATION_JSON).entity(new Gson().toJson("Transaction has been successfully created")).build();
     }
 
     private Currency getCurrency(Connection conn, String selectCurrency, int currencyId) throws SQLException {
