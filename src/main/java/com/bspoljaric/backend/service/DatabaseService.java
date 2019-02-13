@@ -1,6 +1,13 @@
 package com.bspoljaric.backend.service;
 
-public class DatabaseService {
+import java.sql.Connection;
+import java.sql.SQLException;
+
+public interface DatabaseService {
+
+    void initializeDatabase() throws SQLException;
+
+    Connection getConnection() throws ClassNotFoundException, SQLException;
 
 
 }

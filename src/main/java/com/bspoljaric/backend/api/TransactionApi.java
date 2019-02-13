@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -22,7 +23,7 @@ public class TransactionApi {
     final static Logger    LOGGER = Logger.getLogger(TransactionApi.class.getName());
 
     @Inject
-    TransactionServiceImpl transactionService;
+    TransactionService transactionService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -39,8 +40,13 @@ public class TransactionApi {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response transaction() {
-        return Response.ok().type(MediaType.APPLICATION_JSON).entity(new Gson().toJson("")).build();
+    public Response transaction(@PathParam("id") String id) throws SQLException, ClassNotFoundException {
+        final Transaction transaction = transactionService.findById(id);
+        if(transaction == null){
+            return Response.serverError().entity(new ApiError(Response.Status.NOT_FOUND.getStatusCode(), "Transaction with given ID has not been found"))
+                    .build();
+        }
+        return Response.ok().type(MediaType.APPLICATION_JSON).entity(new Gson().toJson(transaction)).build();
     }
 
 }

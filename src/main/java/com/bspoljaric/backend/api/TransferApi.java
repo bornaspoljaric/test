@@ -6,9 +6,11 @@ import com.bspoljaric.backend.model.Currency;
 import com.bspoljaric.backend.model.Transaction;
 import com.bspoljaric.backend.model.TransactionAction;
 import com.bspoljaric.backend.model.TransactionStatus;
+import com.bspoljaric.backend.service.DatabaseService;
 import com.bspoljaric.backend.util.ApiError;
 import com.google.gson.Gson;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -18,21 +20,18 @@ import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Logger;
 
-import static com.bspoljaric.backend.Application.DB_URL;
-import static com.bspoljaric.backend.Application.JDBC_DRIVER;
-import static com.bspoljaric.backend.Application.PASS;
-import static com.bspoljaric.backend.Application.USER;
-
 @Path("/transfer")
 public class TransferApi {
     final static Logger LOGGER = Logger.getLogger(TransferApi.class.getName());
+
+    @Inject
+    DatabaseService     databaseService;
 
     @Path("/create")
     @POST
@@ -64,9 +63,7 @@ public class TransferApi {
 
         Connection conn = null;
         try {
-            Class.forName(JDBC_DRIVER);
-
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            conn = databaseService.getConnection();
 
             // Define all select statements
             final String selectAccount = "SELECT ID, IBAN, CUR_ID, AMOUNT FROM ACCOUNT WHERE IBAN = ? AND CUR_ID = ?";
@@ -127,7 +124,7 @@ public class TransferApi {
             pstmtAccFromCount.setString(1, transfer.getAccFrom());
             pstmtAccFromCount.setInt(2, transfer.getCurrencyId());
 
-            //Account From check
+            // Account From check
             final ResultSet rsAccFromCount = pstmtAccFromCount.executeQuery();
             while (rsAccFromCount.next()) {
                 int count = rsAccFromCount.getInt(1);
@@ -190,7 +187,7 @@ public class TransferApi {
             return Response.serverError().entity(new ApiError(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Server has internal problems, please try again later"))
                     .build();
         } finally {
-            if(conn != null){
+            if (conn != null) {
                 conn.close();
             }
         }

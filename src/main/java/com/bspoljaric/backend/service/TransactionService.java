@@ -8,4 +8,6 @@ import java.util.List;
 public interface TransactionService {
 
     List<Transaction> findAll() throws SQLException;
+
+    Transaction findById(String id) throws SQLException, ClassNotFoundException;
 }
